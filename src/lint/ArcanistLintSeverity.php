@@ -13,14 +13,18 @@ final class ArcanistLintSeverity {
   const SEVERITY_ERROR        = 'error';
   const SEVERITY_DISABLED     = 'disabled';
 
-  public static function getStringForSeverity($severity_code) {
-    static $map = array(
+  public static function getLintSeverities() {
+    return array(
       self::SEVERITY_ADVICE   => 'Advice',
       self::SEVERITY_AUTOFIX  => 'Auto-Fix',
       self::SEVERITY_WARNING  => 'Warning',
       self::SEVERITY_ERROR    => 'Error',
       self::SEVERITY_DISABLED => 'Disabled',
     );
+  }
+
+  public static function getStringForSeverity($severity_code) {
+    $map = self::getLintSeverities();
 
     if (!array_key_exists($severity_code, $map)) {
       throw new Exception("Unknown lint severity '{$severity_code}'!");
@@ -29,9 +33,7 @@ final class ArcanistLintSeverity {
     return $map[$severity_code];
   }
 
-  public static function isAtLeastAsSevere(
-    ArcanistLintMessage $message,
-    $level) {
+  public static function isAtLeastAsSevere($message_sev, $level) {
 
     static $map = array(
       self::SEVERITY_DISABLED => 10,
@@ -41,7 +43,6 @@ final class ArcanistLintSeverity {
       self::SEVERITY_ERROR    => 40,
     );
 
-    $message_sev = $message->getSeverity();
     if (empty($map[$message_sev])) {
       return true;
     }

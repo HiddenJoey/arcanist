@@ -260,8 +260,7 @@ EOTEXT
       // no error means git rev-parse found a branch
       if (!$err) {
         echo phutil_console_format(
-          "Branch name {$proposed_name} already exists; trying a new name.\n"
-        );
+          "Branch name {$proposed_name} already exists; trying a new name.\n");
         continue;
       } else {
         $branch_name = $proposed_name;
@@ -299,8 +298,8 @@ EOTEXT
       // no error means hg log found a bookmark
       if (!$err) {
         echo phutil_console_format(
-          "Bookmark name {$proposed_name} already exists; trying a new name.\n"
-        );
+          "Bookmark name %s already exists; trying a new name.\n",
+          $proposed_name);
         continue;
       } else {
         $bookmark_name = $proposed_name;
@@ -578,8 +577,8 @@ EOTEXT
           csprintf(
             '(cd %s; svn cp %s %s)',
             $repository_api->getPath(),
-            $src,
-            $dst));
+            ArcanistSubversionAPI::escapeFileNameForSVN($src),
+            ArcanistSubversionAPI::escapeFileNameForSVN($dst)));
       }
 
       foreach ($deletes as $delete) {
@@ -587,7 +586,7 @@ EOTEXT
           csprintf(
             '(cd %s; svn rm %s)',
             $repository_api->getPath(),
-            $delete));
+            ArcanistSubversionAPI::escapeFileNameForSVN($delete)));
       }
 
       foreach ($symlinks as $symlink) {
@@ -636,7 +635,7 @@ EOTEXT
           csprintf(
             '(cd %s; svn add %s)',
             $repository_api->getPath(),
-            $add));
+            ArcanistSubversionAPI::escapeFileNameForSVN($add)));
       }
 
       foreach ($propset as $path => $changes) {
@@ -652,7 +651,7 @@ EOTEXT
                 '(cd %s; svn propdel %s %s)',
                 $repository_api->getPath(),
                 $prop,
-                $path));
+                ArcanistSubversionAPI::escapeFileNameForSVN($path)));
           } else {
             passthru(
               csprintf(
@@ -660,7 +659,7 @@ EOTEXT
                 $repository_api->getPath(),
                 $prop,
                 $value,
-                $path));
+                ArcanistSubversionAPI::escapeFileNameForSVN($path)));
           }
         }
       }
@@ -706,9 +705,16 @@ EOTEXT
       }
 
       if ($this->shouldCommit()) {
+        if ($bundle->getFullAuthor()) {
+          $author_cmd = csprintf('--author=%s', $bundle->getFullAuthor());
+        } else {
+          $author_cmd = '';
+        }
+
         $commit_message = $this->getCommitMessage($bundle);
         $future = $repository_api->execFutureLocal(
-          'commit -a -F -');
+          'commit -a %C -F -',
+          $author_cmd);
         $future->write($commit_message);
         $future->resolvex();
         $verb = 'committed';
@@ -758,9 +764,17 @@ EOTEXT
       }
 
       if ($this->shouldCommit()) {
+        $author = coalesce($bundle->getFullAuthor(), $bundle->getAuthorName());
+        if ($author !== null) {
+          $author_cmd = csprintf('-u %s', $author);
+        } else {
+          $author_cmd = '';
+        }
+
         $commit_message = $this->getCommitMessage($bundle);
         $future = $repository_api->execFutureLocal(
-          'commit -A -l -');
+          'commit -A %C -l -',
+          $author_cmd);
         $future->write($commit_message);
         $future->resolvex();
         $verb = 'committed';
@@ -832,10 +846,6 @@ EOTEXT
   private function sanityCheck(ArcanistBundle $bundle) {
     $repository_api = $this->getRepositoryAPI();
 
-    if ($repository_api->supportsRelativeLocalCommits()) {
-      $repository_api->setDefaultBaseCommit();
-    }
-
     // Require clean working copy
     $this->requireCleanWorkingCopy();
 
@@ -859,8 +869,7 @@ EOTEXT
       }
       $ok = phutil_console_confirm(
         "{$issue} Still try to apply the patch?",
-        $default_no = false
-      );
+        $default_no = false);
       if (!$ok) {
         throw new ArcanistUserAbortException();
       }
@@ -868,7 +877,7 @@ EOTEXT
 
     // Check to see if the bundle's base revision matches the working copy
     // base revision
-    if ($repository_api->supportsRelativeLocalCommits()) {
+    if ($repository_api->supportsLocalCommits()) {
       $bundle_base_rev = $bundle->getBaseRevision();
       if (empty($bundle_base_rev)) {
         // this means $source is SOURCE_PATCH || SOURCE_BUNDLE w/ $version < 2
@@ -920,8 +929,7 @@ EOTEXT
           "This diff is against commit {$bundle_base_rev_str}, but the ".
           "commit is nowhere in the working copy. Try to apply it against ".
           "the current working copy state? ({$source_base_rev_str})",
-          $default_no = false
-        );
+          $default_no = false);
         if (!$ok) {
           throw new ArcanistUserAbortException();
         }
@@ -968,8 +976,7 @@ EOTEXT
       'differential.query',
       array(
         'commitHashes' => array($hash),
-      )
-    );
+      ));
 
 
     // grab the latest closed revision only

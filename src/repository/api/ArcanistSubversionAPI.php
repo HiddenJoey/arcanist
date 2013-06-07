@@ -195,6 +195,7 @@ final class ArcanistSubversionAPI extends ArcanistRepositoryAPI {
         'delete -- %Ls',
         array_diff($paths, $add));
     }
+    $this->svnStatus = null;
   }
 
   public function getSVNProperty($path, $property) {
@@ -382,6 +383,15 @@ final class ArcanistSubversionAPI extends ArcanistRepositoryAPI {
     $matches = null;
     if (preg_match('/\.(gif|png|jpe?g|swf|pdf|ico)$/i', $path, $matches)) {
       $mime = $this->getSVNProperty($path, 'svn:mime-type');
+      if ($status & ArcanistRepositoryAPI::FLAG_DELETED) {
+        return <<<EODIFF
+Index: {$path}
+===================================================================
+Cannot display: file marked as a binary type.
+svn:mime-type = application/octet-stream
+
+EODIFF;
+      }
       if ($mime != 'application/octet-stream') {
         execx(
           'svn propset svn:mime-type application/octet-stream %s',

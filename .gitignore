@@ -2,6 +2,7 @@
 ._*
 .*.un~
 /src/.phutil_module_cache
+/src/extensions/*
 /docs/
 /.divinercache/
 /externals/includes/*

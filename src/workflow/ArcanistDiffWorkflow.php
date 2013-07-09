@@ -2104,6 +2104,12 @@ EOTEXT
 
     $messages = $repository_api->getCommitMessageLog();
 
+    if (count($messages) == 1) {
+      // If there's only one message, assume this is an amend-based workflow and
+      // that using it to prefill doesn't make sense.
+      return null;
+    }
+
     $local = $this->loadActiveLocalCommitInfo();
     $hashes = ipull($local, null, 'commit');
 
@@ -2539,7 +2545,8 @@ EOTEXT
         $change->setMetadata("{$type}:binary-phid", $phid);
         echo pht("Uploaded '%s' (%s).", $name, $type)."\n";
       } catch (Exception $e) {
-        echo "Failed to upload {$type} binary '{$name}'.\n";
+        echo "Failed to upload {$type} binary '{$name}'.\n\n";
+        echo $e->getMessage()."\n";
         if (!phutil_console_confirm('Continue?', $default_no = false)) {
           throw new ArcanistUsageException(
             'Aborted due to file upload failure. You can use --skip-binaries '.

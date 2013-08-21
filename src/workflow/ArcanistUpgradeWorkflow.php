@@ -33,6 +33,7 @@ EOTEXT
   public function run() {
     $roots = array();
     $roots['libphutil'] = dirname(phutil_get_library_root('phutil'));
+    $roots['libdisqus'] = dirname(phutil_get_library_root('disqus'));
     $roots['arcanist'] = dirname(phutil_get_library_root('arcanist'));
 
     foreach ($roots as $lib => $root) {

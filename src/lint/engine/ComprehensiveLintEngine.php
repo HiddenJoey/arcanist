@@ -13,10 +13,6 @@ final class ComprehensiveLintEngine extends ArcanistLintEngine {
     $paths = $this->getPaths();
 
     foreach ($paths as $key => $path) {
-      if (!$this->pathExists($path)) {
-        unset($paths[$key]);
-      }
-
       $working_copy = $this->getWorkingCopy();
       $config = $working_copy->getConfig('lint.excludes');
       if ($config !== null) {

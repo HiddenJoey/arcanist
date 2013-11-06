@@ -173,6 +173,7 @@ EOTEXT
 
     $working_copy = ArcanistWorkingCopyIdentity::newFromRootAndConfigFile(
       $project_root,
+      $this->getConfigurationManager(),
       $config,
       $config_file." (svnlook: {$transaction} {$repository})");
 
@@ -181,7 +182,7 @@ EOTEXT
       $transaction,
       $repository);
 
-    $lint_engine = $working_copy->getConfig('lint.engine');
+    $lint_engine = $working_copy->getProjectConfig('lint.engine');
     if (!$lint_engine) {
       return 0;
     }

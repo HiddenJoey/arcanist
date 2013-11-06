@@ -115,7 +115,7 @@ EOTEXT
 
     $engine_class = $this->getArgument(
       'engine',
-      $working_copy->getConfigFromAnySource('unit.engine'));
+      $this->getConfigurationManager()->getConfigFromAnySource('unit.engine'));
 
     if (!$engine_class) {
       throw new ArcanistNoEngineException(
@@ -143,6 +143,7 @@ EOTEXT
 
     $this->engine = newv($engine_class, array());
     $this->engine->setWorkingCopy($working_copy);
+    $this->engine->setConfigurationManager($this->getConfigurationManager());
     if ($everything) {
       $this->engine->setRunAllTests(true);
     } else {

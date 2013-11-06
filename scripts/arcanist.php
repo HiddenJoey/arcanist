@@ -22,6 +22,10 @@ $args->parsePartial(
       'name'    => 'skip-arcconfig',
     ),
     array(
+      'name'    => 'arcrc-file',
+      'param'   => 'filename',
+    ),
+    array(
       'name'    => 'conduit-uri',
       'param'   => 'uri',
       'help'    => 'Connect to Phabricator install specified by __uri__.',
@@ -44,6 +48,7 @@ $force_conduit = $args->getArg('conduit-uri');
 $force_conduit_version = $args->getArg('conduit-version');
 $conduit_timeout = $args->getArg('conduit-timeout');
 $skip_arcconfig = $args->getArg('skip-arcconfig');
+$custom_arcrc = $args->getArg('arcrc-file');
 $load = $args->getArg('load-phutil-library');
 $help = $args->getArg('help');
 
@@ -74,14 +79,17 @@ try {
     array_unshift($args, 'help');
   }
 
-  $global_config = ArcanistBaseWorkflow::readGlobalArcConfig();
-  $system_config = ArcanistBaseWorkflow::readSystemArcConfig();
+  $configuration_manager = new ArcanistConfigurationManager();
+
+  $global_config = $configuration_manager->readUserArcConfig();
+  $system_config = $configuration_manager->readSystemArcConfig();
   if ($skip_arcconfig) {
     $working_copy = ArcanistWorkingCopyIdentity::newDummyWorkingCopy();
   } else {
     $working_copy =
       ArcanistWorkingCopyIdentity::newFromPath($working_directory);
   }
+  $configuration_manager->setWorkingCopyIdentity($working_copy);
 
   reenter_if_this_is_arcanist_or_libphutil(
     $console,
@@ -127,15 +135,18 @@ try {
 
     // Load libraries in ".arcconfig". Libraries here must load.
     arcanist_load_libraries(
-      $working_copy->getConfig('load'),
+      $working_copy->getProjectConfig('load'),
       $must_load = true,
       $lib_source = 'the "load" setting in ".arcconfig"',
       $working_copy);
   }
 
-  $user_config = ArcanistBaseWorkflow::readUserConfigurationFile();
+  if ($custom_arcrc) {
+    $configuration_manager->setUserConfigurationFileLocation($custom_arcrc);
+  }
+  $user_config = $configuration_manager->readUserConfigurationFile();
 
-  $config_class = $working_copy->getConfig('arcanist_configuration');
+  $config_class = $working_copy->getProjectConfig('arcanist_configuration');
   if ($config_class) {
     $config = new $config_class();
   } else {
@@ -144,11 +155,21 @@ try {
 
   $command = strtolower($args[0]);
   $args = array_slice($args, 1);
-  $workflow = $config->selectWorkflow($command, $args, $working_copy, $console);
+  $workflow = $config->selectWorkflow(
+    $command,
+    $args,
+    $configuration_manager,
+    $console);
+  $workflow->setConfigurationManager($configuration_manager);
   $workflow->setArcanistConfiguration($config);
   $workflow->setCommand($command);
   $workflow->setWorkingDirectory($working_directory);
   $workflow->parseArguments($args);
+
+  // Write the command into the environment so that scripts (for example, local
+  // Git commit hooks) can detect that they're being run via `arc` and change
+  // their behaviors.
+  putenv('ARCANIST='.$command);
 
   if ($force_conduit_version) {
     $workflow->forceConduitVersion($force_conduit_version);
@@ -177,14 +198,16 @@ try {
         "This command must be run in a Git, Mercurial or Subversion working ".
         "copy.");
     }
-    $workflow->setWorkingCopy($working_copy);
+    $configuration_manager->setWorkingCopyIdentity($working_copy);
   }
 
   if ($force_conduit) {
     $conduit_uri = $force_conduit;
   } else {
-    if ($working_copy->getConduitURI()) {
-      $conduit_uri = $working_copy->getConduitURI();
+    $project_conduit_uri =
+      $configuration_manager->getProjectConfig('conduit_uri');
+    if ($project_conduit_uri) {
+      $conduit_uri = $project_conduit_uri;
     } else {
       $conduit_uri = idx($global_config, 'default');
     }
@@ -202,14 +225,15 @@ try {
   $workflow->setConduitURI($conduit_uri);
 
   // Apply global CA bundle from configs.
-  if ($ca_bundle = $working_copy->getConfigFromAnySource('https.cabundle')) {
+  $ca_bundle = $configuration_manager->getConfigFromAnySource('https.cabundle');
+  if ($ca_bundle) {
     $ca_bundle = Filesystem::resolvePath(
       $ca_bundle, $working_copy->getProjectRoot());
     HTTPSFuture::setGlobalCABundleFromPath($ca_bundle);
   }
 
   $blind_key = 'https.blindly-trust-domains';
-  $blind_trust = $working_copy->getConfigFromAnySource($blind_key);
+  $blind_trust = $configuration_manager->getConfigFromAnySource($blind_key);
   if ($blind_trust) {
     HTTPSFuture::setBlindlyTrustDomains($blind_trust);
   }
@@ -263,12 +287,13 @@ try {
   }
 
   if ($need_repository_api || ($want_repository_api && $working_copy)) {
-    $repository_api = ArcanistRepositoryAPI::newAPIFromWorkingCopyIdentity(
-      $working_copy);
+    $repository_api = ArcanistRepositoryAPI::newAPIFromConfigurationManager(
+      $configuration_manager);
     $workflow->setRepositoryAPI($repository_api);
   }
 
-  $listeners = $working_copy->getConfigFromAnySource('events.listeners');
+  $listeners = $configuration_manager->getConfigFromAnySource(
+    'events.listeners');
   if ($listeners) {
     foreach ($listeners as $listener) {
       $console->writeLog(

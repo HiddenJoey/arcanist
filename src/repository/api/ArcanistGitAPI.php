@@ -197,7 +197,7 @@ final class ArcanistGitAPI extends ArcanistRepositoryAPI {
     }
 
     if ($this->getBaseCommitArgumentRules() ||
-        $this->getWorkingCopyIdentity()->getConfigFromAnySource('base')) {
+        $this->getConfigurationManager()->getConfigFromAnySource('base')) {
       $base = $this->resolveBaseCommit();
       if (!$base) {
         throw new ArcanistUsageException(
@@ -212,7 +212,7 @@ final class ArcanistGitAPI extends ArcanistRepositoryAPI {
     $default_relative = null;
     $working_copy = $this->getWorkingCopyIdentity();
     if ($working_copy) {
-      $default_relative = $working_copy->getConfig(
+      $default_relative = $working_copy->getProjectConfig(
         'git.default-relative-commit');
       $this->setBaseCommitExplanation(
         "it is the merge-base of '{$default_relative}' and HEAD, as ".

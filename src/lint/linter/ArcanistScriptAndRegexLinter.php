@@ -347,9 +347,10 @@ final class ArcanistScriptAndRegexLinter extends ArcanistLinter {
    * @task config
    */
   private function getConfiguredScript() {
-    $working_copy = $this->getEngine()->getWorkingCopy();
     $key = 'linter.scriptandregex.script';
-    $config = $working_copy->getConfigFromAnySource($key);
+    $config = $this->getEngine()
+      ->getConfigurationManager()
+      ->getConfigFromAnySource($key);
 
     if (!$config) {
       throw new ArcanistUsageException(
@@ -373,9 +374,10 @@ final class ArcanistScriptAndRegexLinter extends ArcanistLinter {
    * @task config
    */
   private function getConfiguredRegex() {
-    $working_copy = $this->getEngine()->getWorkingCopy();
     $key = 'linter.scriptandregex.regex';
-    $config = $working_copy->getConfigFromAnySource($key);
+    $config = $this->getEngine()
+      ->getConfigurationManager()
+      ->getConfigFromAnySource($key);
 
     if (!$config) {
       throw new ArcanistUsageException(

@@ -396,6 +396,7 @@ abstract class ArcanistPhutilTestCase {
 
     $result = new ArcanistUnitTestResult();
     $result->setCoverage($coverage);
+    $result->setNamespace(get_class($this));
     $result->setName($this->runningTest);
     $result->setLink($this->getLink($this->runningTest));
     $result->setResult($test_result);
@@ -463,6 +464,14 @@ abstract class ArcanistPhutilTestCase {
                 $exceptions);
             }
           }
+
+          if (!$this->assertions) {
+            $this->failTest(
+              pht(
+                'This test case made no assertions. Test cases must make at '.
+                'least one assertion.'));
+          }
+
         } catch (ArcanistPhutilTestTerminatedException $ex) {
           // Continue with the next test.
         } catch (ArcanistPhutilTestSkippedException $ex) {

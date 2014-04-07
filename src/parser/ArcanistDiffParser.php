@@ -193,6 +193,22 @@ final class ArcanistDiffParser {
       throw new Exception("Can't parse an empty diff!");
     }
 
+    // Detect `git-format-patch`, by looking for a "---" line somewhere in
+    // the file and then a footer with Git version number, which looks like
+    // this:
+    //
+    //   --
+    //   1.8.4.2
+    //
+    // Note that `git-format-patch` adds a space after the "--", but we don't
+    // require it when detecting patches, as trailing whitespace can easily be
+    // lost in transit.
+    $detect_patch = '/^---$.*^-- ?[\s\d.]+\z/ms';
+    $message = null;
+    if (preg_match($detect_patch, $diff)) {
+      list($message, $diff) = $this->stripGitFormatPatch($diff);
+    }
+
     $this->didStartParse($diff);
 
     // Strip off header comments. While `patch` allows comments anywhere in the
@@ -203,12 +219,20 @@ final class ArcanistDiffParser {
       $line = $this->nextLine();
     }
 
+    if (strlen($message)) {
+      // If we found a message during pre-parse steps, add it to the resulting
+      // changes here.
+      $change = $this->buildChange(null)
+        ->setType(ArcanistDiffChangeType::TYPE_MESSAGE)
+        ->setMetadata('message', $message);
+    }
+
     do {
       $patterns = array(
         // This is a normal SVN text change, probably from "svn diff".
         '(?P<type>Index): (?P<cur>.+)',
         // This is an SVN text change, probably from "svnlook diff".
-        '(?P<type>Modified|Added|Deleted): (?P<cur>.+)',
+        '(?P<type>Modified|Added|Deleted|Copied): (?P<cur>.+)',
         // This is an SVN property change, probably from "svn diff".
         '(?P<type>Property changes on): (?P<cur>.+)',
         // This is a git commit message, probably from "git show".
@@ -290,6 +314,7 @@ final class ArcanistDiffParser {
         case 'Modified':
         case 'Added':
         case 'Deleted':
+        case 'Copied':
           $this->parseIndexHunk($change);
           break;
         case 'Property changes on':
@@ -1344,6 +1369,44 @@ final class ArcanistDiffParser {
     $new = self::stripGitPathPrefix($new);
 
     return array($old, $new);
+  }
+
+
+  /**
+   * Strip the header and footer off a `git-format-patch` diff.
+   *
+   * Returns a parseable normal diff and a textual commit message.
+   */
+  private function stripGitFormatPatch($diff) {
+
+    // We can parse this by splitting it into two pieces over and over again
+    // along different section dividers:
+    //
+    //   1. Mail headers.
+    //   2. ("\n\n")
+    //   3. Mail body.
+    //   4. ("---")
+    //   5. Diff stat section.
+    //   6. ("\n\n")
+    //   7. Actual diff body.
+    //   8. ("--")
+    //   9. Patch footer.
+
+    list($head, $tail) = preg_split("/^---$/m", $diff, 2);
+    list($mail_headers, $mail_body) = explode("\n\n", $head, 2);
+    list($body, $foot) = preg_split('/^-- ?$/m', $tail, 2);
+    list($stat, $diff) = explode("\n\n", $body, 2);
+
+    // Rebuild the commit message by putting the subject line back on top of it,
+    // if we can find one.
+    $matches = null;
+    $pattern = '/^Subject: (?:\[PATCH\] )?(.*)$/mi';
+    if (preg_match($pattern, $mail_headers, $matches)) {
+      $mail_body = $matches[1]."\n\n".$mail_body;
+      $mail_body = rtrim($mail_body);
+    }
+
+    return array($mail_body, $diff);
   }
 
 }

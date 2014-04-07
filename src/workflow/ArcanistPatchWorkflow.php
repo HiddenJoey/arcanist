@@ -265,7 +265,7 @@ EOTEXT
 
       list($err) = $repository_api->execManualLocal(
         'log -r %s',
-        $proposed_name);
+        hgsprintf('%s', $proposed_name));
 
       // no error means hg log found a bookmark
       if (!$err) {

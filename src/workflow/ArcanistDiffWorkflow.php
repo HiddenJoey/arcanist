@@ -745,6 +745,8 @@ EOTEXT
       if ($this->commitMessageFromRevision == $remote_corpus) {
         $new_message = $message;
       } else {
+        $remote_corpus = ArcanistCommentRemover::removeComments(
+          $remote_corpus);
         $new_message = ArcanistDifferentialCommitMessage::newFromRawCorpus(
           $remote_corpus);
         $new_message->pullDataFromConduit($conduit);
@@ -1574,6 +1576,7 @@ EOTEXT
           ));
       }
     }
+
     $old_message = $template;
 
     $included = array();

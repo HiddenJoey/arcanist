@@ -98,13 +98,13 @@ final class ArcanistPyLintLinter extends ArcanistLinter {
   }
 
   private function getPyLintPath() {
-    $pylint_bin = "pylint";
+    $pylint_bin = 'pylint';
 
     // Use the PyLint prefix specified in the config file
     $config = $this->getEngine()->getConfigurationManager();
     $prefix = $config->getConfigFromAnySource('lint.pylint.prefix');
     if ($prefix !== null) {
-      $pylint_bin = $prefix."/bin/".$pylint_bin;
+      $pylint_bin = $prefix.'/bin/'.$pylint_bin;
     }
 
     if (!Filesystem::pathExists($pylint_bin)) {
@@ -156,13 +156,21 @@ final class ArcanistPyLintLinter extends ArcanistLinter {
     }
 
     $python_path[] = '';
-    return implode(":", $python_path);
+    return implode(':', $python_path);
   }
 
   private function getPyLintOptions() {
     // '-rn': don't print lint report/summary at end
-    // '-iy': show message codes for lint warnings/errors
-    $options = array('-rn',  '-iy');
+    $options = array('-rn');
+
+    // Version 0.x.x include the pylint message ids in the output
+    if (version_compare($this->getLinterVersion(), '1', 'lt')) {
+      array_push($options, '-iy', '--output-format=text');
+    }
+    // Version 1.x.x set the output specifically to the 0.x.x format
+    else {
+      array_push($options, "--msg-template='{msg_id}:{line:3d}: {obj}: {msg}'");
+    }
 
     $working_copy = $this->getEngine()->getWorkingCopy();
     $config = $this->getEngine()->getConfigurationManager();
@@ -184,11 +192,34 @@ final class ArcanistPyLintLinter extends ArcanistLinter {
       $options = array_merge($options, $config_options);
     }
 
-    return implode(" ", $options);
+    return implode(' ', $options);
   }
 
   public function getLinterName() {
     return 'PyLint';
+  }
+
+  private function getLinterVersion() {
+
+    $pylint_bin = $this->getPyLintPath();
+    $options = '--version';
+
+    list($stdout) = execx(
+      '%s %s',
+      $pylint_bin,
+      $options);
+
+    $lines = explode("\n", $stdout);
+    $matches = null;
+
+    // If the version command didn't return anything or the regex didn't match
+    // Assume a future version that at least is compatible with 1.x.x
+    if (count($lines) == 0 ||
+        !preg_match('/pylint\s((?:\d+\.?)+)/', $lines[0], $matches)) {
+      return '999';
+    }
+
+    return $matches[1];
   }
 
   public function lintPath($path) {
@@ -233,7 +264,7 @@ final class ArcanistPyLintLinter extends ArcanistLinter {
       $message->setPath($path);
       $message->setLine($matches[2]);
       $message->setCode($matches[1]);
-      $message->setName($this->getLinterName()." ".$matches[1]);
+      $message->setName($this->getLinterName().' '.$matches[1]);
       $message->setDescription($matches[3]);
       $message->setSeverity($this->getMessageCodeSeverity($matches[1]));
       $this->addLintMessage($message);

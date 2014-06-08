@@ -62,12 +62,12 @@ EOTEXT
         'The revision you provided does not exist!');
     }
     $revision = $revisions[0];
-    $commits = $revision["commits"];
+    $commits = $revision['commits'];
     if (!$commits) {
       throw new ArcanistUsageException(
         'This revision has not been committed yet!');
     }
-    elseif (count($commits) > 1) {
+    else if (count($commits) > 1) {
       throw new ArcanistUsageException(
         'The revision you provided has multiple commits!');
     }
@@ -77,7 +77,7 @@ EOTEXT
       array(
         'phids' => array($commit_phid),
       ));
-    $commit_id = $commit[$commit_phid]["name"];
+    $commit_id = $commit[$commit_phid]['name'];
     return $commit_id;
   }
 
@@ -91,7 +91,7 @@ EOTEXT
       ));
     $commit = $result[$commit_id];
     // This commit was not found in Diffusion
-    if (array_key_exists("error", $commit)) {
+    if (array_key_exists('error', $commit)) {
       return null;
     }
     return $commit;
@@ -124,8 +124,7 @@ EOTEXT
     $console = PhutilConsole::getConsole();
     $conduit = $this->getConduit();
     $repository_api = $this->getRepositoryAPI();
-    $repository = $this->loadProjectRepository();
-    $callsign = $repository["callsign"];
+
     $is_git_svn = $repository_api instanceof ArcanistGitAPI &&
                   $repository_api->isGitSubversionRepo();
     $is_hg_svn = $repository_api instanceof ArcanistMercurialAPI &&

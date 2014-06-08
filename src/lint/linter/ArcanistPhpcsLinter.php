@@ -17,6 +17,20 @@ final class ArcanistPhpcsLinter extends ArcanistExternalLinter {
 
   private $reports;
 
+  public function getInfoName() {
+    return 'PHP_CodeSniffer';
+  }
+
+  public function getInfoURI() {
+    return 'http://pear.php.net/package/PHP_CodeSniffer/';
+  }
+
+  public function getInfoDescription() {
+    return pht(
+      'PHP_CodeSniffer tokenizes PHP, JavaScript and CSS files and '.
+      'detects violations of a defined set of coding standards.');
+  }
+
   public function getLinterName() {
     return 'PHPCS';
   }
@@ -34,13 +48,8 @@ final class ArcanistPhpcsLinter extends ArcanistExternalLinter {
   }
 
   public function getDefaultFlags() {
-    // TODO: Deprecation warnings.
-
-    $config = $this->getEngine()->getConfigurationManager();
-
-    $options = $config->getConfigFromAnySource('lint.phpcs.options', array());
-
-    $standard = $config->getConfigFromAnySource('lint.phpcs.standard');
+    $options = $this->getDeprecatedConfiguration('lint.phpcs.options', array());
+    $standard = $this->getDeprecatedConfiguration('lint.phpcs.standard');
     if (!empty($standard)) {
       if (is_array($options)) {
         $options[] = '--standard='.$standard;
@@ -53,12 +62,26 @@ final class ArcanistPhpcsLinter extends ArcanistExternalLinter {
   }
 
   public function getDefaultBinary() {
-    // TODO: Deprecation warnings.
-    $config = $this->getEngine()->getConfigurationManager();
-    return $config->getConfigFromAnySource('lint.phpcs.bin', 'phpcs');
+    return $this->getDeprecatedConfiguration('lint.phpcs.bin', 'phpcs');
+  }
+
+  public function getVersion() {
+    list($stdout) = execx('%C --version', $this->getExecutableCommand());
+
+    $matches = array();
+    $regex = '/^PHP_CodeSniffer version (?P<version>\d+\.\d+\.\d+)\b/';
+    if (preg_match($regex, $stdout, $matches)) {
+      return $matches['version'];
+    } else {
+      return false;
+    }
   }
 
   public function shouldExpectCommandErrors() {
+    return true;
+  }
+
+  public function supportsReadDataFromStdin() {
     return true;
   }
 

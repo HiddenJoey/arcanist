@@ -2,8 +2,6 @@
 
 /**
  * Exports changes from Differential or the working copy to a file.
- *
- * @group workflow
  */
 final class ArcanistExportWorkflow extends ArcanistBaseWorkflow {
 
@@ -84,7 +82,6 @@ EOTEXT
     );
   }
 
-
   protected function didParseArguments() {
     $source = self::SOURCE_LOCAL;
     $requested = 0;
@@ -105,10 +102,9 @@ EOTEXT
 
     if ($requested > 1) {
       throw new ArcanistUsageException(
-      "Options '--revision' and '--diff' are not compatible. Choose exactly ".
-      "one change source.");
+        "Options '--revision' and '--diff' are not compatible. Choose exactly ".
+        "one change source.");
     }
-
 
     $format = null;
     $requested = 0;
@@ -167,7 +163,6 @@ EOTEXT
   }
 
   public function run() {
-
     $source = $this->getSource();
 
     switch ($source) {
@@ -178,7 +173,9 @@ EOTEXT
 
         if ($repository_api instanceof ArcanistGitAPI) {
           $this->parseBaseCommitArgument($this->getArgument('paths'));
-          $diff = $repository_api->getFullGitDiff();
+          $diff = $repository_api->getFullGitDiff(
+            $repository_api->getBaseCommit(),
+            $repository_api->getHeadCommit());
           $changes = $parser->parseDiff($diff);
           $authors = $this->getConduit()->callMethodSynchronous(
             'user.query',
@@ -216,7 +213,7 @@ EOTEXT
         $bundle->setProjectID($this->getWorkingCopy()->getProjectID());
         $bundle->setBaseRevision(
           $repository_api->getSourceControlBaseRevision());
-        // note we can't get a revision ID for SOURCE_LOCAL
+        // NOTE: we can't get a revision ID for SOURCE_LOCAL
 
         $parser = new PhutilEmailAddress($author);
         $bundle->setAuthorName($parser->getDisplayName());
@@ -271,4 +268,5 @@ EOTEXT
 
     return 0;
   }
+
 }

@@ -31,7 +31,7 @@ final class ArcanistFilenameLinter extends ArcanistLinter {
 
   public function getLintNameMap() {
     return array(
-      self::LINT_BAD_FILENAME   => pht('Bad Filename'),
+      self::LINT_BAD_FILENAME => pht('Bad Filename'),
     );
   }
 
@@ -46,6 +46,10 @@ final class ArcanistFilenameLinter extends ArcanistLinter {
   }
 
   public function shouldLintDirectories() {
+    return true;
+  }
+
+  public function shouldLintSymbolicLinks() {
     return true;
   }
 

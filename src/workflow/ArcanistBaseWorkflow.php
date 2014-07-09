@@ -76,9 +76,7 @@ abstract class ArcanistBaseWorkflow extends Phobject {
   private $changeCache = array();
 
 
-  public function __construct() {
-
-  }
+  public function __construct() {}
 
 
   abstract public function run();
@@ -320,12 +318,14 @@ abstract class ArcanistBaseWorkflow extends Phobject {
       }
 
       if (empty($credentials['user'])) {
-        throw new ConduitClientException('ERR-INVALID-USER',
-                                         'Empty user in credentials.');
+        throw new ConduitClientException(
+          'ERR-INVALID-USER',
+          'Empty user in credentials.');
       }
       if (empty($credentials['certificate'])) {
-        throw new ConduitClientException('ERR-NO-CERTIFICATE',
-                                         'Empty certificate in credentials.');
+        throw new ConduitClientException(
+          'ERR-NO-CERTIFICATE',
+          'Empty certificate in credentials.');
       }
 
       $description = idx($credentials, 'description', '');
@@ -447,18 +447,6 @@ abstract class ArcanistBaseWorkflow extends Phobject {
         "requiresAuthentication() to return true.");
     }
     return $this->userPHID;
-  }
-
-  /**
-   * Deprecated. See @{method:getUserPHID}.
-   *
-   * @deprecated
-   */
-  final public function getUserGUID() {
-    phutil_deprecated(
-      'ArcanistBaseWorkflow::getUserGUID',
-      'This method has been renamed to getUserPHID().');
-    return $this->getUserPHID();
   }
 
   /**
@@ -606,6 +594,7 @@ abstract class ArcanistBaseWorkflow extends Phobject {
     $arc_config = $this->getArcanistConfiguration();
     $command = $this->getCommand();
     $spec += $arc_config->getCustomArgumentsForCommand($command);
+
     return $spec;
   }
 
@@ -791,7 +780,7 @@ abstract class ArcanistBaseWorkflow extends Phobject {
     if ($this->stashed) {
       $api = $this->getRepositoryAPI();
       $api->unstashChanges();
-      echo pht('Restored stashed changes to the working directory.') . "\n";
+      echo pht('Restored stashed changes to the working directory.')."\n";
     }
   }
 

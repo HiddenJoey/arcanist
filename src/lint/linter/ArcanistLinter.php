@@ -4,7 +4,6 @@
  * Implements lint rules, like syntax checks for a specific language.
  *
  * @task info Human Readable Information
- *
  * @stable
  */
 abstract class ArcanistLinter {
@@ -28,7 +27,6 @@ abstract class ArcanistLinter {
 
 /*  -(  Human Readable Information  )---------------------------------------- */
 
-
   /**
    * Return an optional informative URI where humans can learn more about this
    * linter.
@@ -43,7 +41,6 @@ abstract class ArcanistLinter {
     return null;
   }
 
-
   /**
    * Return a brief human-readable description of the linter.
    *
@@ -55,7 +52,6 @@ abstract class ArcanistLinter {
   public function getInfoDescription() {
     return null;
   }
-
 
   /**
    * Return a human-readable linter name.
@@ -72,7 +68,6 @@ abstract class ArcanistLinter {
       $this->getLinterConfigurationName(),
       get_class($this));
   }
-
 
   public function getLinterPriority() {
     return 1.0;
@@ -148,6 +143,10 @@ abstract class ArcanistLinter {
         continue;
       }
 
+      if (!$this->shouldLintSymbolicLinks() && $engine->isSymbolicLink($path)) {
+        continue;
+      }
+
       $keep[] = $path;
     }
 
@@ -170,7 +169,7 @@ abstract class ArcanistLinter {
     return $this->data[$path];
   }
 
-  public function setEngine(ArcanistLintEngine $engine) {
+  final public function setEngine(ArcanistLintEngine $engine) {
     $this->engine = $engine;
     return $this;
   }
@@ -260,10 +259,7 @@ abstract class ArcanistLinter {
     return $this->addLintMessage($message);
   }
 
-  final protected function raiseLintAtPath(
-    $code,
-    $desc) {
-
+  final protected function raiseLintAtPath($code, $desc) {
     return $this->raiseLintAtLine(null, null, $code, $desc, null, null);
   }
 
@@ -442,6 +438,10 @@ abstract class ArcanistLinter {
     return false;
   }
 
+  protected function shouldLintSymbolicLinks() {
+    return false;
+  }
+
   /**
    * Map a configuration lint code to an `arc` lint code. Primarily, this is
    * intended for validation, but can also be used to normalize case or
@@ -456,7 +456,6 @@ abstract class ArcanistLinter {
     return $code;
   }
 
-
   /**
    * Retrieve an old lint configuration value from `.arcconfig` or a similar
    * source.
@@ -468,8 +467,7 @@ abstract class ArcanistLinter {
    * @param   wild    Default value to return if key is not present in config.
    * @return  wild    Configured value, or default if no configuration exists.
    */
-  protected function getDeprecatedConfiguration($key, $default = null) {
-
+  final protected function getDeprecatedConfiguration($key, $default = null) {
     // If we're being called in a context without an engine (probably from
     // `arc linters`), just return the default value.
     if (!$this->engine) {

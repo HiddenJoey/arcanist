@@ -7,8 +7,6 @@
  * @task message    Commit and Update Messages
  * @task diffspec   Diff Specification
  * @task diffprop   Diff Properties
- *
- * @group workflow
  */
 final class ArcanistDiffWorkflow extends ArcanistBaseWorkflow {
 
@@ -395,6 +393,22 @@ EOTEXT
         ),
       ),
       '*' => 'paths',
+      'head' => array(
+        'param' => 'commit',
+        'help' => pht(
+          'Specify the end of the commit range. This disables many '.
+          'Arcanist/Phabricator features which depend on having access to '.
+          'the working copy.'),
+        'supports' => array('git'),
+        'nosupport' => array(
+          'svn' => pht('Subversion does not support commit ranges.'),
+          'hg' => pht('Mercurial does not support --head yet.'),
+        ),
+        'conflicts' => array(
+          'lintall'   => '--head suppresses lint.',
+          'advice'    => '--head suppresses lint.',
+        ),
+      )
     );
 
     if (phutil_is_windows()) {
@@ -433,8 +447,14 @@ EOTEXT
         array_unshift($argv, '--ansi');
       }
 
-      if ($this->getRepositoryAPI()->supportsCommitRanges()) {
-        $this->getRepositoryAPI()->getBaseCommit();
+      $repo = $this->getRepositoryAPI();
+      $head_commit = $this->getArgument('head');
+      if ($head_commit !== null) {
+        $repo->setHeadCommit($head_commit);
+      }
+
+      if ($repo->supportsCommitRanges()) {
+        $repo->getBaseCommit();
       }
 
       $script = phutil_get_library_root('arcanist').'/../scripts/arcanist.php';
@@ -661,7 +681,9 @@ EOTEXT
         if ($repository_api instanceof ArcanistSubversionAPI) {
           $repository_api->limitStatusToPaths($this->getArgument('paths'));
         }
-        $this->requireCleanWorkingCopy();
+        if (!$this->getArgument('head')) {
+          $this->requireCleanWorkingCopy();
+        }
       } catch (ArcanistUncommittedChangesException $ex) {
         if ($repository_api instanceof ArcanistMercurialAPI) {
           $use_dirty_changes = false;
@@ -937,7 +959,9 @@ EOTEXT
         $repository_api,
         $paths);
     } else if ($repository_api instanceof ArcanistGitAPI) {
-      $diff = $repository_api->getFullGitDiff();
+      $diff = $repository_api->getFullGitDiff(
+        $repository_api->getBaseCommit(),
+        $repository_api->getHeadCommit());
       if (!strlen($diff)) {
         throw new ArcanistUsageException(
           'No changes found. (Did you specify the wrong commit range?)');
@@ -1181,6 +1205,10 @@ EOTEXT
       return false;
     }
 
+    if ($this->getArgument('head') !== null) {
+      return false;
+    }
+
     // Run this last: with --raw or --raw-command, we won't have a repository
     // API.
     if ($this->isHistoryImmutable()) {
@@ -1216,7 +1244,8 @@ EOTEXT
   private function runLint() {
     if ($this->getArgument('nolint') ||
         $this->getArgument('only') ||
-        $this->isRawDiffSource()) {
+        $this->isRawDiffSource() ||
+        $this->getArgument('head')) {
       return ArcanistLintWorkflow::RESULT_SKIP;
     }
 
@@ -1297,7 +1326,8 @@ EOTEXT
   private function runUnit() {
     if ($this->getArgument('nounit') ||
         $this->getArgument('only') ||
-        $this->isRawDiffSource()) {
+        $this->isRawDiffSource() ||
+        $this->getArgument('head')) {
       return ArcanistUnitWorkflow::RESULT_SKIP;
     }
 

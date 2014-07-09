@@ -388,9 +388,7 @@ abstract class ArcanistPhutilTestCase {
    *
    * @task internal
    */
-  final public function __construct() {
-
-  }
+  final public function __construct() {}
 
 
   /**
@@ -576,6 +574,8 @@ abstract class ArcanistPhutilTestCase {
           // TODO: This indicates "unreachable", but it flags the closing braces
           // of functions which end in "return", which is super ridiculous. Just
           // ignore it for now.
+          //
+          // See http://bugs.xdebug.org/view.php?id=1041
           $str .= 'N'; // Not executable.
         } else if ($c === 1) {
           $str .= 'C'; // Covered.

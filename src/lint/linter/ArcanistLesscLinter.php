@@ -51,8 +51,7 @@ final class ArcanistLesscLinter extends ArcanistExternalLinter {
       ),
       'lessc.strict-units' => array(
         'type' => 'optional bool',
-        'help' => pht(
-          'Enable strict handling of units in expressions.'),
+        'help' => pht('Enable strict handling of units in expressions.'),
       ),
     );
   }
@@ -86,11 +85,12 @@ final class ArcanistLesscLinter extends ArcanistExternalLinter {
     return 'lessc';
   }
 
-  public function getCacheVersion() {
+  public function getVersion() {
     list($stdout) = execx('%C --version', $this->getExecutableCommand());
 
     $matches = array();
-    if (preg_match('/^lessc (?P<version>\d+\.\d+\.\d+)$/', $stdout, $matches)) {
+    $regex = '/^lessc (?P<version>\d+\.\d+\.\d+)\b/';
+    if (preg_match($regex, $stdout, $matches)) {
       $version = $matches['version'];
     } else {
       return false;
@@ -131,8 +131,8 @@ final class ArcanistLesscLinter extends ArcanistExternalLinter {
     foreach ($lines as $line) {
       $matches = null;
       $match = preg_match(
-        '/^(?P<name>\w+): (?P<description>.+) ' .
-        'in (?P<path>.+|-) ' .
+        '/^(?P<name>\w+): (?P<description>.+) '.
+        'in (?P<path>.+|-) '.
         'on line (?P<line>\d+), column (?P<column>\d+):$/',
         $line,
         $matches);
@@ -194,4 +194,5 @@ final class ArcanistLesscLinter extends ArcanistExternalLinter {
 
     return $messages;
   }
+
 }

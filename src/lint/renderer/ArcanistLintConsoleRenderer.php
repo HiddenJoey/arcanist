@@ -2,10 +2,9 @@
 
 /**
  * Shows lint messages to the user.
- *
- * @group lint
  */
 final class ArcanistLintConsoleRenderer extends ArcanistLintRenderer {
+
   private $showAutofixPatches = false;
 
   public function setShowAutofixPatches($show_autofix_patches) {
@@ -62,7 +61,7 @@ final class ArcanistLintConsoleRenderer extends ArcanistLintRenderer {
 
     if ($text) {
       $prefix = phutil_console_format("**>>>** Lint for __%s__:\n\n\n", $path);
-      return $prefix . implode("\n", $text);
+      return $prefix.implode("\n", $text);
     } else {
       return null;
     }
@@ -234,7 +233,8 @@ final class ArcanistLintConsoleRenderer extends ArcanistLintRenderer {
   }
 
   public function renderOkayResult() {
-    return
-      phutil_console_format("<bg:green>** OKAY **</bg> No lint warnings.\n");
+    return phutil_console_format(
+      "<bg:green>** OKAY **</bg> No lint warnings.\n");
   }
+
 }

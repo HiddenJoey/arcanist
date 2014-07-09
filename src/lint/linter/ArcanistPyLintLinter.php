@@ -48,21 +48,18 @@
  *   (E) error, for probable bugs in the code
  *   (F) fatal, if an error occurred which prevented pylint from
  *       doing further processing.
- *
- * @group linter
  */
 final class ArcanistPyLintLinter extends ArcanistLinter {
 
   private function getMessageCodeSeverity($code) {
-
     $config = $this->getEngine()->getConfigurationManager();
 
-    $error_regexp   =
-      $config->getConfigFromAnySource('lint.pylint.codes.error');
-    $warning_regexp =
-      $config->getConfigFromAnySource('lint.pylint.codes.warning');
-    $advice_regexp  =
-      $config->getConfigFromAnySource('lint.pylint.codes.advice');
+    $error_regexp   = $config->getConfigFromAnySource(
+      'lint.pylint.codes.error');
+    $warning_regexp = $config->getConfigFromAnySource(
+      'lint.pylint.codes.warning');
+    $advice_regexp  = $config->getConfigFromAnySource(
+      'lint.pylint.codes.advice');
 
     if (!$error_regexp && !$warning_regexp && !$advice_regexp) {
       throw new ArcanistUsageException(
@@ -148,9 +145,9 @@ final class ArcanistPyLintLinter extends ArcanistLinter {
     if ($config_paths !== null) {
       foreach ($config_paths as $config_path) {
         if ($config_path !== null) {
-          $python_path[] =
-            Filesystem::resolvePath($config_path,
-                                    $working_copy->getProjectRoot());
+          $python_path[] = Filesystem::resolvePath(
+            $config_path,
+            $working_copy->getProjectRoot());
         }
       }
     }
@@ -181,8 +178,8 @@ final class ArcanistPyLintLinter extends ArcanistLinter {
     $rcfile = $config->getConfigFromAnySource('lint.pylint.rcfile');
     if ($rcfile !== null) {
       $rcfile = Filesystem::resolvePath(
-                   $rcfile,
-                   $working_copy->getProjectRoot());
+        $rcfile,
+        $working_copy->getProjectRoot());
       $options[] = csprintf('--rcfile=%s', $rcfile);
     }
 
@@ -200,16 +197,12 @@ final class ArcanistPyLintLinter extends ArcanistLinter {
   }
 
   private function getLinterVersion() {
-
     $pylint_bin = $this->getPyLintPath();
     $options = '--version';
 
-    list($stdout) = execx(
-      '%s %s',
-      $pylint_bin,
-      $options);
+    list($stdout) = execx('%s %s', $pylint_bin, $options);
 
-    $lines = explode("\n", $stdout);
+    $lines = phutil_split_lines($stdout, false);
     $matches = null;
 
     // If the version command didn't return anything or the regex didn't match
@@ -247,13 +240,12 @@ final class ArcanistPyLintLinter extends ArcanistLinter {
       }
     }
 
-    $lines = explode("\n", $stdout);
+    $lines = phutil_split_lines($stdout, false);
     $messages = array();
     foreach ($lines as $line) {
       $matches = null;
-      if (!preg_match(
-              '/([A-Z]\d+): *(\d+)(?:|,\d*): *(.*)$/',
-              $line, $matches)) {
+      $regex = '/([A-Z]\d+): *(\d+)(?:|,\d*): *(.*)$/';
+      if (!preg_match($regex, $line, $matches)) {
         continue;
       }
       foreach ($matches as $key => $match) {

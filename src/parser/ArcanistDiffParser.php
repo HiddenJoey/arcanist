@@ -2,8 +2,6 @@
 
 /**
  * Parses diffs from a working copy.
- *
- * @group diff
  */
 final class ArcanistDiffParser {
 
@@ -279,7 +277,7 @@ final class ArcanistDiffParser {
           "Expected a hunk header, like 'Index: /path/to/file.ext' (svn), ".
           "'Property changes on: /path/to/file.ext' (svn properties), ".
           "'commit 59bcc3ad6775562f845953cf01624225' (git show), ".
-          "'diff --git' (git diff), '--- filename' (unified diff), or " .
+          "'diff --git' (git diff), '--- filename' (unified diff), or ".
           "'diff -r' (hg diff or patch).");
       }
 
@@ -453,7 +451,6 @@ final class ArcanistDiffParser {
   }
 
   private function parseSVNPropertyChange($op, $prop) {
-
     $old = array();
     $new = array();
 
@@ -1378,7 +1375,6 @@ final class ArcanistDiffParser {
    * Returns a parseable normal diff and a textual commit message.
    */
   private function stripGitFormatPatch($diff) {
-
     // We can parse this by splitting it into two pieces over and over again
     // along different section dividers:
     //

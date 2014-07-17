@@ -5,7 +5,6 @@
  * @generated
  * @phutil-library-version 2
  */
-
 phutil_register_library_map(array(
   '__library_version__' => 2,
   'class' =>
@@ -135,6 +134,7 @@ phutil_register_library_map(array(
     'ArcanistPasteWorkflow' => 'workflow/ArcanistPasteWorkflow.php',
     'ArcanistPatchWorkflow' => 'workflow/ArcanistPatchWorkflow.php',
     'ArcanistPhpcsLinter' => 'lint/linter/ArcanistPhpcsLinter.php',
+    'ArcanistPhrequentWorkflow' => 'workflow/ArcanistPhrequentWorkflow.php',
     'ArcanistPhutilLibraryLinter' => 'lint/linter/ArcanistPhutilLibraryLinter.php',
     'ArcanistPhutilTestCase' => 'unit/engine/phutil/ArcanistPhutilTestCase.php',
     'ArcanistPhutilTestCaseTestCase' => 'unit/engine/phutil/testcase/ArcanistPhutilTestCaseTestCase.php',
@@ -161,6 +161,8 @@ phutil_register_library_map(array(
     'ArcanistSingleLintEngine' => 'lint/engine/ArcanistSingleLintEngine.php',
     'ArcanistSpellingLinter' => 'lint/linter/ArcanistSpellingLinter.php',
     'ArcanistSpellingLinterTestCase' => 'lint/linter/__tests__/ArcanistSpellingLinterTestCase.php',
+    'ArcanistStartWorkflow' => 'workflow/ArcanistStartWorkflow.php',
+    'ArcanistStopWorkflow' => 'workflow/ArcanistStopWorkflow.php',
     'ArcanistSubversionAPI' => 'repository/api/ArcanistSubversionAPI.php',
     'ArcanistSubversionHookAPI' => 'repository/hookapi/ArcanistSubversionHookAPI.php',
     'ArcanistSvnHookPreCommitWorkflow' => 'workflow/ArcanistSvnHookPreCommitWorkflow.php',
@@ -168,6 +170,7 @@ phutil_register_library_map(array(
     'ArcanistTestCase' => 'infrastructure/testing/ArcanistTestCase.php',
     'ArcanistTextLinter' => 'lint/linter/ArcanistTextLinter.php',
     'ArcanistTextLinterTestCase' => 'lint/linter/__tests__/ArcanistTextLinterTestCase.php',
+    'ArcanistTimeWorkflow' => 'workflow/ArcanistTimeWorkflow.php',
     'ArcanistTodoWorkflow' => 'workflow/ArcanistTodoWorkflow.php',
     'ArcanistUncommittedChangesException' => 'exception/usage/ArcanistUncommittedChangesException.php',
     'ArcanistUnitConsoleRenderer' => 'unit/renderer/ArcanistUnitConsoleRenderer.php',
@@ -309,6 +312,7 @@ phutil_register_library_map(array(
     'ArcanistPasteWorkflow' => 'ArcanistBaseWorkflow',
     'ArcanistPatchWorkflow' => 'ArcanistBaseWorkflow',
     'ArcanistPhpcsLinter' => 'ArcanistExternalLinter',
+    'ArcanistPhrequentWorkflow' => 'ArcanistBaseWorkflow',
     'ArcanistPhutilLibraryLinter' => 'ArcanistLinter',
     'ArcanistPhutilTestCaseTestCase' => 'ArcanistPhutilTestCase',
     'ArcanistPhutilTestSkippedException' => 'Exception',
@@ -332,6 +336,8 @@ phutil_register_library_map(array(
     'ArcanistSingleLintEngine' => 'ArcanistLintEngine',
     'ArcanistSpellingLinter' => 'ArcanistLinter',
     'ArcanistSpellingLinterTestCase' => 'ArcanistArcanistLinterTestCase',
+    'ArcanistStartWorkflow' => 'ArcanistPhrequentWorkflow',
+    'ArcanistStopWorkflow' => 'ArcanistPhrequentWorkflow',
     'ArcanistSubversionAPI' => 'ArcanistRepositoryAPI',
     'ArcanistSubversionHookAPI' => 'ArcanistHookAPI',
     'ArcanistSvnHookPreCommitWorkflow' => 'ArcanistBaseWorkflow',
@@ -339,6 +345,7 @@ phutil_register_library_map(array(
     'ArcanistTestCase' => 'ArcanistPhutilTestCase',
     'ArcanistTextLinter' => 'ArcanistLinter',
     'ArcanistTextLinterTestCase' => 'ArcanistArcanistLinterTestCase',
+    'ArcanistTimeWorkflow' => 'ArcanistPhrequentWorkflow',
     'ArcanistTodoWorkflow' => 'ArcanistBaseWorkflow',
     'ArcanistUncommittedChangesException' => 'ArcanistUsageException',
     'ArcanistUnitConsoleRenderer' => 'ArcanistUnitRenderer',

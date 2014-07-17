@@ -158,7 +158,7 @@ final class ArcanistGitAPI extends ArcanistRepositoryAPI {
     }
 
     // NOTE: Windows escaping of "%" symbols apparently is inherently broken;
-    // when passed throuhgh escapeshellarg() they are replaced with spaces.
+    // when passed through escapeshellarg() they are replaced with spaces.
 
     // TODO: Learn how cmd.exe works and find some clever workaround?
 
@@ -279,7 +279,8 @@ final class ArcanistGitAPI extends ArcanistRepositoryAPI {
 
     if (!$default_relative) {
       list($err, $upstream) = $this->execManualLocal(
-        "rev-parse --abbrev-ref --symbolic-full-name '@{upstream}'");
+        'rev-parse --abbrev-ref --symbolic-full-name %s',
+        '@{upstream}');
 
       if (!$err) {
         $default_relative = trim($upstream);
@@ -428,17 +429,20 @@ final class ArcanistGitAPI extends ArcanistRepositoryAPI {
    * @param head revision. If this is null, the generated diff will include the
    * working copy
    */
-  public function getFullGitDiff($base, $head=null) {
+  public function getFullGitDiff($base, $head = null) {
     $options = $this->getDiffFullOptions();
 
-    $diff_revision = $base;
-    if ($head) {
-      $diff_revision .= '..'.$head;
+    if ($head !== null) {
+      list($stdout) = $this->execxLocal(
+        "diff {$options} %s %s --",
+        $base,
+        $head);
+    } else {
+      list($stdout) = $this->execxLocal(
+        "diff {$options} %s --",
+        $base);
     }
 
-    list($stdout) = $this->execxLocal(
-      "diff {$options} %s --",
-      $diff_revision);
     return $stdout;
   }
 
@@ -1164,7 +1168,8 @@ final class ArcanistGitAPI extends ArcanistRepositoryAPI {
             break;
           case 'upstream':
             list($err, $upstream) = $this->execManualLocal(
-              "rev-parse --abbrev-ref --symbolic-full-name '@{upstream}'");
+              'rev-parse --abbrev-ref --symbolic-full-name %s',
+              '@{upstream}');
             if (!$err) {
               $upstream = rtrim($upstream);
               list($upstream_merge_base) = $this->execxLocal(

@@ -104,9 +104,19 @@ EOTEXT
 
       $commits = array();
       foreach ($things as $key => $thing) {
-        $commit = $repository_api->getCanonicalRevisionName($thing);
-        if ($commit) {
-          $commits[$commit] = $key;
+        if ($thing == '.') {
+          // Git resolves '.' like HEAD, but it should be interpreted to mean
+          // "the current directory". Just skip resolution and fall through.
+          continue;
+        }
+
+        try {
+          $commit = $repository_api->getCanonicalRevisionName($thing);
+          if ($commit) {
+            $commits[$commit] = $key;
+          }
+        } catch (Exception $ex) {
+          // Ignore.
         }
       }
 
@@ -134,7 +144,13 @@ EOTEXT
       // If we fail, try to resolve them as paths.
 
       foreach ($things as $key => $path) {
-        $path = preg_replace('/:([0-9]+)$/', '$\1', $path);
+        $lines = null;
+        $parts = explode(':', $path);
+        if (count($parts) > 1) {
+          $lines = array_pop($parts);
+        }
+        $path = implode(':', $parts);
+
         $full_path = Filesystem::resolvePath($path);
 
         if (!$is_force && !Filesystem::pathExists($full_path)) {
@@ -155,7 +171,13 @@ EOTEXT
         }
 
         $base_uri = $this->getBaseURI();
-        $uris[] = $base_uri.$path;
+        $uri = $base_uri.$path;
+
+        if ($lines) {
+          $uri = $uri.'$'.$lines;
+        }
+
+        $uris[] = $uri;
       }
     } else {
       if ($things) {
@@ -166,6 +188,19 @@ EOTEXT
             "commits. To browse paths or symbolic commits in Diffusion, run ".
             "'arc browse' from inside a working copy.")."\n");
       }
+    }
+
+    foreach ($things as $thing) {
+      $console->writeOut(
+        pht(
+          'Unable to find an object named **%s**, no such commit exists in '.
+          'the remote, and no such path exists in the working copy. Use '.
+          '__--force__ to treat this as a path anyway.',
+          $thing)."\n");
+    }
+
+    if ($uris) {
+      $this->openURIsInBrowser($uris);
     }
 
     foreach ($things as $thing) {

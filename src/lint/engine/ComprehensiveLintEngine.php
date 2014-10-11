@@ -11,16 +11,10 @@ final class ComprehensiveLintEngine extends ArcanistLintEngine {
     $paths = $this->getPaths();
 
     foreach ($paths as $key => $path) {
-      $working_copy = $this->getWorkingCopy();
-      $config = $working_copy->getConfig('lint.excludes');
-      if ($config !== null) {
-        foreach ($config as $exclude_path) {
-          if (preg_match('@'.$exclude_path.'@', $path)) {
-            // Third-party stuff lives in $exclude_path; don't run lint engines
-            // against it.
-            unset($paths[$key]);
-          }
-        }
+      if (preg_match('@^externals/@', $path)) {
+        // Third-party stuff lives in /externals/; don't run lint engines
+        // against it.
+        unset($paths[$key]);
       }
     }
 

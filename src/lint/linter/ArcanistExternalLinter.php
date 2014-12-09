@@ -268,7 +268,7 @@ abstract class ArcanistExternalLinter extends ArcanistFutureLinter {
         throw new ArcanistUsageException(
           pht(
             'Unable to locate interpreter "%s" to run linter %s. You may '.
-            'need to install the intepreter, or adjust your linter '.
+            'need to install the interpreter, or adjust your linter '.
             'configuration.'.
             "\nTO INSTALL: %s",
             $interpreter,
@@ -432,7 +432,7 @@ abstract class ArcanistExternalLinter extends ArcanistFutureLinter {
           'Specify a string (or list of strings) identifying the binary '.
           'which should be invoked to execute this linter. This overrides '.
           'the default binary. If you provide a list of possible binaries, '.
-          'the first one which exists will be used.')
+          'the first one which exists will be used.'),
       ),
       'flags' => array(
         'type' => 'optional list<string>',

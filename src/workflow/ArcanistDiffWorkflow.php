@@ -406,7 +406,7 @@ EOTEXT
           'lintall'   => '--head suppresses lint.',
           'advice'    => '--head suppresses lint.',
         ),
-      )
+      ),
     );
 
     return $arguments;
@@ -609,6 +609,12 @@ EOTEXT
     if ($repository_api->supportsCommitRanges()) {
       $this->parseBaseCommitArgument($this->getArgument('paths'));
     }
+
+    $head_commit = $this->getArgument('head');
+    if ($head_commit !== null) {
+      $repository_api->setHeadCommit($head_commit);
+    }
+
   }
 
   private function runDiffSetupBasics() {

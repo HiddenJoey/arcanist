@@ -26,7 +26,7 @@ final class ArcanistPhpLinter extends ArcanistExternalLinter {
     return 'php';
   }
 
-  public function getMandatoryFlags() {
+  protected function getMandatoryFlags() {
     return array('-l');
   }
 
@@ -39,15 +39,11 @@ final class ArcanistPhpLinter extends ArcanistExternalLinter {
   }
 
   public function getVersion() {
-    list($stdout) = execx('%C --version', $this->getExecutableCommand());
-
-    $matches = array();
-    $regex = '/^PHP (?P<version>\d+\.\d+\.\d+)\b/';
-    if (preg_match($regex, $stdout, $matches)) {
-      return $matches['version'];
-    } else {
-      return false;
-    }
+    list($stdout) = execx(
+      '%C --run %s',
+      $this->getExecutableCommand(),
+      'echo phpversion();');
+    return $stdout;
   }
 
   public function shouldExpectCommandErrors() {
@@ -63,8 +59,8 @@ final class ArcanistPhpLinter extends ArcanistExternalLinter {
     // Combine $stdout and $stderr for consistency
     $stdout = $stderr."\n".$stdout;
     $matches = array();
-    $regex = '/PHP (?<type>.+?) error:\s+(?<error>.*?)\s+in\s+(?<file>.*?)'.
-      '\s+on line\s+(?<line>\d*)/';
+    $regex = '/^(?<type>.+?) error:\s+(?<error>.*?)\s+in\s+(?<file>.*?)'.
+      '\s+on line\s+(?<line>\d*)$/m';
     if (preg_match($regex, $stdout, $matches)) {
       $type = strtolower($matches['type']);
       $message = new ArcanistLintMessage();

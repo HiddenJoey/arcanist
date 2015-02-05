@@ -661,7 +661,8 @@ abstract class ArcanistWorkflow extends Phobject {
     }
 
     $more = array();
-    for ($ii = 0; $ii < count($args); $ii++) {
+    $size = count($args);
+    for ($ii = 0; $ii < $size; $ii++) {
       $arg = $args[$ii];
       $arg_name = null;
       $arg_key = null;
@@ -672,6 +673,14 @@ abstract class ArcanistWorkflow extends Phobject {
         break;
       } else if (!strncmp($arg, '--', 2)) {
         $arg_key = substr($arg, 2);
+        $parts = explode('=', $arg_key, 2);
+        if (count($parts) == 2) {
+          list($arg_key, $val) = $parts;
+
+          array_splice($args, $ii, 1, array('--'.$arg_key, $val));
+          $size++;
+        }
+
         if (!array_key_exists($arg_key, $spec)) {
           $corrected = ArcanistConfiguration::correctArgumentSpelling(
             $arg_key,
@@ -706,7 +715,7 @@ abstract class ArcanistWorkflow extends Phobject {
       if (empty($options['param'])) {
         $dict[$arg_key] = true;
       } else {
-        if ($ii == count($args) - 1) {
+        if ($ii == $size - 1) {
           throw new ArcanistUsageException(pht(
             "Option '%s' requires a parameter.",
             $arg));
@@ -999,10 +1008,12 @@ abstract class ArcanistWorkflow extends Phobject {
     $repository = $this->loadProjectRepository();
     if ($repository) {
       $callsign = $repository['callsign'];
-      $known_commits = $this->getConduit()->callMethodSynchronous(
-        'diffusion.getcommits',
-        array('commits' => array('r'.$callsign.$commit['commit'])));
-      if (ifilter($known_commits, 'error', $negate = true)) {
+      $commit_name = 'r'.$callsign.$commit['commit'];
+      $result = $this->getConduit()->callMethodSynchronous(
+        'diffusion.querycommits',
+        array('names' => array($commit_name)));
+      $known_commit = idx($result['identifierMap'], $commit_name);
+      if (!$known_commit) {
         return false;
       }
     }
@@ -1055,7 +1066,7 @@ abstract class ArcanistWorkflow extends Phobject {
     return $this->loadBundleFromConduit(
       $conduit,
       array(
-      'diff_id' => $diff_id,
+      'ids' => array($diff_id),
     ));
   }
 
@@ -1066,7 +1077,7 @@ abstract class ArcanistWorkflow extends Phobject {
     return $this->loadBundleFromConduit(
       $conduit,
       array(
-      'revision_id' => $revision_id,
+      'revisionIDs' => array($revision_id),
     ));
   }
 
@@ -1074,8 +1085,8 @@ abstract class ArcanistWorkflow extends Phobject {
     ConduitClient $conduit,
     $params) {
 
-    $future = $conduit->callMethod('differential.getdiff', $params);
-    $diff = $future->resolve();
+    $future = $conduit->callMethod('differential.querydiffs', $params);
+    $diff = head($future->resolve());
 
     $changes = array();
     foreach ($diff['changes'] as $changedict) {
@@ -1206,8 +1217,8 @@ abstract class ArcanistWorkflow extends Phobject {
     return array();
   }
 
-  protected function getSupportedRevisionControlSystems() {
-    return array('any');
+  public function getSupportedRevisionControlSystems() {
+    return array('git', 'hg', 'svn');
   }
 
   final protected function getPassthruArgumentsAsMap($command) {

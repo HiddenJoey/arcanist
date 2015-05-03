@@ -294,8 +294,7 @@ EOTEXT
       'add-all' => array(
         'short' => 'a',
         'help' =>
-          'Automatically add all untracked, unstaged and uncommitted files to '.
-          'the commit.',
+          'Automatically add all unstaged and uncommitted files to the commit.',
       ),
       'json' => array(
         'help' =>
@@ -627,40 +626,18 @@ EOTEXT
 
     if ($this->requiresWorkingCopy()) {
       $repository_api = $this->getRepositoryAPI();
-      try {
-        if ($this->getArgument('add-all')) {
-          $this->setCommitMode(self::COMMIT_ENABLE);
-        } else if ($this->getArgument('uncommitted')) {
-          $this->setCommitMode(self::COMMIT_DISABLE);
-        } else {
-          $this->setCommitMode(self::COMMIT_ALLOW);
-        }
-        if ($repository_api instanceof ArcanistSubversionAPI) {
-          $repository_api->limitStatusToPaths($this->getArgument('paths'));
-        }
-        if (!$this->getArgument('head')) {
-          $this->requireCleanWorkingCopy();
-        }
-      } catch (ArcanistUncommittedChangesException $ex) {
-        if ($repository_api instanceof ArcanistMercurialAPI) {
-          $use_dirty_changes = false;
-          if ($this->getArgument('uncommitted')) {
-            // OK.
-          } else {
-            $ok = phutil_console_confirm(
-              "You have uncommitted changes in your working copy. You can ".
-              "include them in the diff, or abort and deal with them. (Use ".
-              "'--uncommitted' to include them and skip this prompt.) ".
-              "Do you want to include uncommitted changes in the diff?");
-            if (!$ok) {
-              throw $ex;
-            }
-          }
-
-          $this->haveUncommittedChanges = true;
-        } else {
-          throw $ex;
-        }
+      if ($this->getArgument('add-all')) {
+        $this->setCommitMode(self::COMMIT_ENABLE);
+      } else if ($this->getArgument('uncommitted')) {
+        $this->setCommitMode(self::COMMIT_DISABLE);
+      } else {
+        $this->setCommitMode(self::COMMIT_ALLOW);
+      }
+      if ($repository_api instanceof ArcanistSubversionAPI) {
+        $repository_api->limitStatusToPaths($this->getArgument('paths'));
+      }
+      if (!$this->getArgument('head')) {
+        $this->requireCleanWorkingCopy();
       }
     }
 
@@ -1606,7 +1583,7 @@ EOTEXT
     while (!$done) {
       $template = rtrim($template, "\r\n")."\n\n";
       foreach ($issues as $issue) {
-        $template .= '# '.$issue."\n";
+        $template .= rtrim('# '.$issue)."\n";
       }
       $template .= "\n";
 

@@ -137,36 +137,10 @@ final class ArcanistConfigurationDrivenLintEngine extends ArcanistLintEngine {
   }
 
   private function loadAvailableLinters() {
-    $linters = id(new PhutilSymbolLoader())
+    return id(new PhutilClassMapQuery())
       ->setAncestorClass('ArcanistLinter')
-      ->loadObjects();
-
-    $map = array();
-    foreach ($linters as $linter) {
-      $name = $linter->getLinterConfigurationName();
-
-      // This linter isn't selectable through configuration.
-      if ($name === null) {
-        continue;
-      }
-
-      if (empty($map[$name])) {
-        $map[$name] = $linter;
-        continue;
-      }
-
-      $orig_class = get_class($map[$name]);
-      $this_class = get_class($linter);
-      throw new Exception(
-        pht(
-          "Two linters (`%s`, `%s`) both have the same configuration ".
-          "name ('%s'). Linters must have unique configuration names.",
-          $orig_class,
-          $this_class,
-          $name));
-    }
-
-    return $map;
+      ->setUniqueMethod('getLinterConfigurationName', true)
+      ->execute();
   }
 
   private function matchPaths(
@@ -179,79 +153,38 @@ final class ArcanistConfigurationDrivenLintEngine extends ArcanistLintEngine {
 
     $match = array();
     foreach ($paths as $path) {
-      $console->writeLog("%s\n", pht("Examining path '%s'...", $path));
-
       $keep = false;
       if (!$include) {
         $keep = true;
-        $console->writeLog(
-          "  %s\n",
-          pht('Including path by default because there is no "include" rule.'));
       } else {
-        $console->writeLog(
-          "  %s\n",
-          pht('Testing "include" rules.'));
         foreach ($include as $rule) {
           if (preg_match($rule, $path)) {
             $keep = true;
-            $console->writeLog(
-              "  %s\n",
-              pht('Path matches include rule: %s.', $rule));
             break;
-          } else {
-            $console->writeLog(
-              "  %s\n",
-              pht('Path does not match include rule: %s', $rule));
           }
         }
       }
 
       if (!$keep) {
-        $console->writeLog(
-          "  %s\n",
-          pht('Path does not match any include rules, discarding.'));
         continue;
       }
 
       if ($exclude) {
-        $console->writeLog(
-          "  %s\n",
-          pht('Testing "exclude" rules.'));
         foreach ($exclude as $rule) {
           if (preg_match($rule, $path)) {
-            $console->writeLog(
-              "  %s\n",
-              pht('Path matches "exclude" rule: %s.', $rule));
             continue 2;
-          } else {
-            $console->writeLog(
-              "  %s\n",
-              pht('Path does not match "exclude" rule: %s.', $rule));
           }
         }
       }
 
       if ($global_exclude) {
-        $console->writeLog(
-          "  %s\n",
-          pht('Testing global "exclude" rules.'));
         foreach ($global_exclude as $rule) {
           if (preg_match($rule, $path)) {
-            $console->writeLog(
-              "  %s\n",
-              pht('Path matches global "exclude" rule: %s.', $rule));
             continue 2;
-          } else {
-            $console->writeLog(
-              "  %s\n",
-              pht('Path does not match global "exclude" rule: %s.', $rule));
           }
         }
       }
 
-      $console->writeLog(
-        "  %s\n",
-        pht('Path matches.'));
       $match[] = $path;
     }
 

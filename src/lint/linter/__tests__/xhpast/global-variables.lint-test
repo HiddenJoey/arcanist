@@ -1,8 +1,0 @@
-<?php
-global $BASE_URL;
-function foo() {
-  global $x, $y;
-}
-~~~~~~~~~~
-warning:2:1
-warning:4:3

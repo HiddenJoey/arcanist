@@ -8,3 +8,4 @@ For more information about Phabricator, see http://phabricator.org/.
 **LICENSE**
 
 Arcanist is released under the Apache 2.0 license except as otherwise noted.
+You just need to try another higher version license. It may be good for readers.

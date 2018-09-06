@@ -18,7 +18,7 @@ $base_args->parsePartial(
       'help'    => pht('Load a libphutil library.'),
       'repeat'  => true,
     ),
-    array(
+   array(
       'name'    => 'skip-arcconfig',
     ),
     array(
@@ -85,6 +85,7 @@ try {
       'arcanist',
     );
 
+    *
     foreach ($libraries as $library_name) {
       echo tsprintf(
         "**<bg:magenta> %s </bg>** %s\n",
